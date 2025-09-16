@@ -11,8 +11,22 @@ This directory contains automation scripts for various DevOps tasks.
 
 ### Prerequisites
 - PowerShell 7+
-- Azure PowerShell module
-- Appropriate Azure permissions
+- Azure PowerShell module (for Azure scripts)
+- Appropriate Azure permissions (for Azure scripts)
+- SonarQube authentication token (for SonarQube scripts)
+
+### Available Scripts
+
+#### Get-SonarQubeProjectInfo.ps1
+Retrieves project information from SonarQube including Lines of Code (LOC) and last scan dates, then generates a Markdown report.
+
+```powershell
+# Basic usage
+.\powershell\Get-SonarQubeProjectInfo.ps1 -SonarQubeUrl "https://sonarqube.company.com" -Token "your-token-here"
+
+# Custom output path
+.\powershell\Get-SonarQubeProjectInfo.ps1 -SonarQubeUrl "https://sonarqube.company.com" -Token "your-token-here" -OutputPath "reports\sonar-report.md"
+```
 
 ### Usage
 ```powershell
