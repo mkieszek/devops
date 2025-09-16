@@ -1,0 +1,49 @@
+# Automation Scripts
+
+This directory contains automation scripts for various DevOps tasks.
+
+## Structure
+
+- `powershell/` - PowerShell scripts for Windows and Azure automation
+- `python/` - Python scripts for cross-platform automation and tooling
+
+## PowerShell Scripts
+
+### Prerequisites
+- PowerShell 7+
+- Azure PowerShell module
+- Appropriate Azure permissions
+
+### Usage
+```powershell
+# Import modules if needed
+Import-Module Az
+
+# Run scripts with parameters
+.\powershell\Deploy-Resources.ps1 -Environment "dev" -ResourceGroup "rg-devops-dev"
+```
+
+## Python Scripts
+
+### Prerequisites
+- Python 3.9+
+- Azure CLI
+- Required pip packages (see requirements.txt)
+
+### Usage
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run scripts
+python python/azure_automation.py --environment dev
+```
+
+## Best Practices
+
+- Include proper error handling
+- Use configuration files for environment-specific settings
+- Implement logging for all operations
+- Include help documentation
+- Test scripts in development environment first
+- Use version control for script dependencies
