@@ -1,6 +1,6 @@
 # SonarQube Projects Report
 
-**Generated on:** 2024-01-15 14:30:00  
+**Generated on:** 2025-09-16 14:30:00  
 **SonarQube Server:** https://sonarqube.company.com  
 **Total Projects:** 5
 
@@ -8,11 +8,11 @@
 
 | Project Name | Project Key | Lines of Code | Total Lines | Last Scan Date |
 |--------------|-------------|---------------|-------------|----------------|
-| DevOps Portal | devops-portal | 25,430 | 31,250 | 2024-01-15 10:15 |
-| API Gateway | api-gateway | 12,890 | 15,200 | 2024-01-14 16:45 |
-| User Management | user-mgmt | 8,750 | 10,500 | 2024-01-13 09:30 |
-| Analytics Service | analytics-svc | 15,620 | 18,900 | 2024-01-12 14:20 |
-| Legacy System | legacy-app | 45,890 | 52,100 | 2024-01-10 11:00 |
+| DevOps Portal | devops-portal | 25,430 | 31,250 | 2025-09-16 10:15 |
+| API Gateway | api-gateway | 12,890 | 15,200 | 2025-09-15 16:45 |
+| User Management | user-mgmt | 8,750 | 10,500 | 2025-09-14 09:30 |
+| Analytics Service | analytics-svc | 15,620 | 18,900 | 2025-09-13 14:20 |
+| Legacy System | legacy-app | 45,890 | 52,100 | 2025-09-12 11:00 |
 
 ## Summary Statistics
 
