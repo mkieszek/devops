@@ -35,6 +35,7 @@ This repository contains DevOps tools, documentation, scripts, and examples to s
 - Include comprehensive documentation and comments
 
 ### Azure & Cloud Development
+- Use Azure Pipelines for automation and CI/CD workflows
 - Use Azure CLI and PowerShell Az modules for Azure automation
 - Implement proper Azure Resource Manager template structure
 - Follow Azure naming conventions and tagging strategies
@@ -84,6 +85,17 @@ This repository contains DevOps tools, documentation, scripts, and examples to s
 - Include docstrings for all functions and classes
 - Implement proper error handling with try/except blocks
 - Use pytest for testing
+
+### Azure Pipelines Best Practices
+- Use YAML pipelines over classic pipelines for version control
+- Structure pipelines with proper stages: Build, Test, Deploy
+- Use pipeline templates for reusable components
+- Implement proper variable groups for environment configuration
+- Use service connections for secure authentication to Azure
+- Include proper artifact publishing and consumption
+- Implement conditional deployments based on branch or environment
+- Use pipeline triggers and scheduled builds appropriately
+- Include pipeline validation and security scanning stages
 
 ### Monitoring & Observability
 - Create Grafana dashboards with proper metrics and alerts
@@ -145,13 +157,17 @@ This repository contains DevOps tools, documentation, scripts, and examples to s
 - Implement infrastructure drift detection and remediation
 - Use blue-green or canary deployment strategies
 
-## CI/CD Pipeline Considerations
+## Azure Pipelines & CI/CD Considerations
+- Use Azure Pipelines YAML for all CI/CD workflows
 - Include proper build validation and testing stages
 - Implement infrastructure validation before deployment
+- Use Azure DevOps variable groups for environment-specific configuration
 - Use proper branching strategies (GitFlow or GitHub Flow)
-- Include security scanning in pipelines
+- Include security scanning in pipelines (SonarQube integration)
 - Implement proper artifact management and versioning
 - Include rollback procedures and health checks
+- Use Azure Pipeline templates for reusable components
+- Implement approval gates for production deployments
 
 ## Troubleshooting Guidelines
 - Include proper logging at appropriate levels
