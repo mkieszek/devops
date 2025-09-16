@@ -1,0 +1,231 @@
+# Azure DevOps CI/CD Pipeline Example
+# This pipeline demonstrates best practices for .NET application deployment
+
+trigger:
+  branches:
+    include:
+    - main
+    - develop
+  paths:
+    include:
+    - src/*
+    - infrastructure/*
+
+pr:
+  branches:
+    include:
+    - main
+  paths:
+    include:
+    - src/*
+    - infrastructure/*
+
+variables:
+  - group: 'devops-common'
+  - name: buildConfiguration
+    value: 'Release'
+  - name: vmImageName
+    value: 'windows-latest'
+  - name: dotnetVersion
+    value: '6.x'
+
+stages:
+- stage: Build
+  displayName: 'Build and Test'
+  jobs:
+  - job: Build
+    displayName: 'Build job'
+    pool:
+      vmImage: $(vmImageName)
+    
+    steps:
+    - task: UseDotNet@2
+      displayName: 'Use .NET SDK'
+      inputs:
+        packageType: 'sdk'
+        version: $(dotnetVersion)
+        includePreviewVersions: false
+    
+    - task: DotNetCoreCLI@2
+      displayName: 'Restore packages'
+      inputs:
+        command: 'restore'
+        projects: '**/*.csproj'
+        feedsToUse: 'select'
+    
+    - task: DotNetCoreCLI@2
+      displayName: 'Build solution'
+      inputs:
+        command: 'build'
+        projects: '**/*.csproj'
+        arguments: '--configuration $(buildConfiguration) --no-restore'
+    
+    - task: DotNetCoreCLI@2
+      displayName: 'Run unit tests'
+      inputs:
+        command: 'test'
+        projects: '**/*Tests/*.csproj'
+        arguments: '--configuration $(buildConfiguration) --no-build --collect:"XPlat Code Coverage"'
+        publishTestResults: true
+    
+    - task: PublishCodeCoverageResults@1
+      displayName: 'Publish code coverage'
+      inputs:
+        codeCoverageTool: 'Cobertura'
+        summaryFileLocation: '$(Agent.TempDirectory)/**/coverage.cobertura.xml'
+    
+    - task: SonarQubePrepare@5
+      displayName: 'Prepare SonarQube analysis'
+      condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+      inputs:
+        SonarQube: 'SonarQube-Connection'
+        scannerMode: 'MSBuild'
+        projectKey: 'devops-project'
+        projectName: 'DevOps Project'
+    
+    - task: SonarQubeAnalyze@5
+      displayName: 'Run SonarQube analysis'
+      condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    
+    - task: SonarQubePublish@5
+      displayName: 'Publish SonarQube results'
+      condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+      inputs:
+        pollingTimeoutSec: '300'
+    
+    - task: DotNetCoreCLI@2
+      displayName: 'Publish application'
+      inputs:
+        command: 'publish'
+        projects: '**/WebApp.csproj'
+        arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+        zipAfterPublish: true
+    
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish artifacts'
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)'
+        artifactName: 'drop'
+        publishLocation: 'Container'
+
+- stage: Infrastructure
+  displayName: 'Infrastructure Deployment'
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - deployment: DeployInfrastructure
+    displayName: 'Deploy Infrastructure'
+    pool:
+      vmImage: 'ubuntu-latest'
+    environment: 'dev'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
+          
+          - task: TerraformInstaller@0
+            displayName: 'Install Terraform'
+            inputs:
+              terraformVersion: 'latest'
+          
+          - task: TerraformTaskV3@3
+            displayName: 'Terraform Init'
+            inputs:
+              provider: 'azurerm'
+              command: 'init'
+              workingDirectory: '$(Pipeline.Workspace)/drop/infrastructure'
+              backendServiceArm: 'Azure-ServiceConnection'
+              backendAzureRmResourceGroupName: 'rg-terraform-state'
+              backendAzureRmStorageAccountName: 'terraformstatedevops'
+              backendAzureRmContainerName: 'tfstate'
+              backendAzureRmKey: 'dev.terraform.tfstate'
+          
+          - task: TerraformTaskV3@3
+            displayName: 'Terraform Plan'
+            inputs:
+              provider: 'azurerm'
+              command: 'plan'
+              workingDirectory: '$(Pipeline.Workspace)/drop/infrastructure'
+              environmentServiceNameAzureRM: 'Azure-ServiceConnection'
+              commandOptions: '-var-file="environments/dev.tfvars"'
+          
+          - task: TerraformTaskV3@3
+            displayName: 'Terraform Apply'
+            inputs:
+              provider: 'azurerm'
+              command: 'apply'
+              workingDirectory: '$(Pipeline.Workspace)/drop/infrastructure'
+              environmentServiceNameAzureRM: 'Azure-ServiceConnection'
+              commandOptions: '-var-file="environments/dev.tfvars"'
+
+- stage: Deploy
+  displayName: 'Application Deployment'
+  dependsOn: Infrastructure
+  condition: succeeded()
+  jobs:
+  - deployment: DeployApp
+    displayName: 'Deploy Application'
+    pool:
+      vmImage: $(vmImageName)
+    environment: 'dev'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
+          
+          - task: AzureWebApp@1
+            displayName: 'Deploy to Azure Web App'
+            inputs:
+              azureSubscription: 'Azure-ServiceConnection'
+              appType: 'webApp'
+              appName: '$(webAppName)'
+              package: '$(Pipeline.Workspace)/drop/**/*.zip'
+              deploymentMethod: 'auto'
+          
+          - task: AzureAppServiceManage@0
+            displayName: 'Restart Azure Web App'
+            inputs:
+              azureSubscription: 'Azure-ServiceConnection'
+              action: 'Restart Azure App Service'
+              webAppName: '$(webAppName)'
+
+- stage: PostDeployment
+  displayName: 'Post-Deployment Validation'
+  dependsOn: Deploy
+  condition: succeeded()
+  jobs:
+  - job: HealthCheck
+    displayName: 'Health Check'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: PowerShell@2
+      displayName: 'Application Health Check'
+      inputs:
+        targetType: 'inline'
+        script: |
+          $healthCheckUrl = "https://$(webAppName).azurewebsites.net/health"
+          
+          for ($i = 1; $i -le 5; $i++) {
+            try {
+              $response = Invoke-RestMethod -Uri $healthCheckUrl -Method GET -TimeoutSec 30
+              if ($response.Status -eq "Healthy") {
+                Write-Host "Health check passed on attempt $i"
+                exit 0
+              }
+            }
+            catch {
+              Write-Warning "Health check failed on attempt $i: $($_.Exception.Message)"
+            }
+            
+            if ($i -lt 5) {
+              Start-Sleep -Seconds 30
+            }
+          }
+          
+          Write-Error "Health check failed after 5 attempts"
+          exit 1

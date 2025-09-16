@@ -1,0 +1,19 @@
+# Example environment-specific variable file for development environment
+# Copy this file and customize for each environment
+
+project_name    = "devops"
+environment     = "dev"
+location        = "West Europe"
+owner          = "DevOps Team"
+cost_center    = "IT-DevOps"
+
+# Storage configuration
+storage_account_tier       = "Standard"
+storage_replication_type   = "LRS"
+
+# Key Vault configuration
+key_vault_sku = "standard"
+
+# Monitoring configuration
+log_analytics_sku    = "PerGB2018"
+log_retention_days   = 30
