@@ -127,7 +127,16 @@ function Initialize-AzureDevOpsApi {
         $testUrl = "$script:BaseApiUrl/connectionData?api-version=$script:ApiVersion"
         $response = Invoke-RestMethod -Uri $testUrl -Headers $headers -Method Get
         
-        Write-LogMessage "Successfully connected to Azure DevOps organization: $($response.authenticatedUser.displayName)"
+        $userDisplayName = if ($response.authenticatedUser.providerDisplayName) {
+            $response.authenticatedUser.providerDisplayName
+        } elseif ($response.authenticatedUser.customDisplayName) {
+            $response.authenticatedUser.customDisplayName
+        } elseif ($response.authenticatedUser.descriptor) {
+            $response.authenticatedUser.descriptor
+        } else {
+            "Connected User"
+        }
+        Write-LogMessage "Successfully connected to Azure DevOps organization: $userDisplayName"
         return $headers
     }
     catch {
