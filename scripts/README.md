@@ -27,6 +27,9 @@ Retrieves project information from Azure DevOps including projects, security gro
 
 # Custom output path and project filter
 .\powershell\Get-AzureDevOpsProjectInfo.ps1 -OrganizationUrl "https://dev.azure.com/yourorg" -PersonalAccessToken "your-pat-here" -OutputPath "reports\devops-report.md" -ProjectFilter "DevOps*"
+
+# Using specific API version
+.\powershell\Get-AzureDevOpsProjectInfo.ps1 -OrganizationUrl "https://dev.azure.com/yourorg" -PersonalAccessToken "your-pat-here" -ApiVersion "7.0"
 ```
 
 #### Get-SonarQubeProjectInfo.ps1

@@ -19,6 +19,9 @@
 .PARAMETER ProjectFilter
     Optional filter for specific project names (supports wildcards)
 
+.PARAMETER ApiVersion
+    Azure DevOps REST API version to use (default: "6.0")
+
 .EXAMPLE
     .\Get-AzureDevOpsProjectInfo.ps1 -OrganizationUrl "https://dev.azure.com/yourorg" -PersonalAccessToken "your-pat-here"
 
@@ -27,6 +30,9 @@
 
 .EXAMPLE
     .\Get-AzureDevOpsProjectInfo.ps1 -OrganizationUrl "https://dev.azure.com/yourorg" -PersonalAccessToken "your-pat-here" -ProjectFilter "DevOps*"
+
+.EXAMPLE
+    .\Get-AzureDevOpsProjectInfo.ps1 -OrganizationUrl "https://dev.azure.com/yourorg" -PersonalAccessToken "your-pat-here" -ApiVersion "7.0"
 
 .NOTES
     Author: DevOps Team
@@ -51,7 +57,11 @@ param(
     [string]$OutputPath = "azuredevops-projects-report.md",
 
     [Parameter(Mandatory = $false)]
-    [string]$ProjectFilter = "*"
+    [string]$ProjectFilter = "*",
+
+    [Parameter(Mandatory = $false)]
+    [ValidateNotNullOrEmpty()]
+    [string]$ApiVersion = "6.0"
 )
 
 # Enable strict mode and error handling
@@ -61,6 +71,8 @@ $ErrorActionPreference = "Stop"
 # Global variables
 $script:LogMessages = @()
 $script:BaseApiUrl = ""
+$script:ApiVersion = $ApiVersion
+$script:GraphApiVersion = "$ApiVersion-preview.1"
 
 function Write-LogMessage {
     <#
@@ -112,7 +124,7 @@ function Initialize-AzureDevOpsApi {
         }
         
         # Test connection by getting organization info
-        $testUrl = "$script:BaseApiUrl/connectionData?api-version=6.0"
+        $testUrl = "$script:BaseApiUrl/connectionData?api-version=$script:ApiVersion"
         $response = Invoke-RestMethod -Uri $testUrl -Headers $headers -Method Get
         
         Write-LogMessage "Successfully connected to Azure DevOps organization: $($response.authenticatedUser.displayName)"
@@ -137,7 +149,7 @@ function Get-AzureDevOpsProjects {
     try {
         Write-LogMessage "Retrieving Azure DevOps projects..."
         
-        $projectsUrl = "$script:BaseApiUrl/projects?api-version=6.0&`$top=1000"
+        $projectsUrl = "$script:BaseApiUrl/projects?api-version=$script:ApiVersion&`$top=1000"
         $response = Invoke-RestMethod -Uri $projectsUrl -Headers $Headers -Method Get
         
         $projects = $response.value
@@ -170,7 +182,7 @@ function Get-AzureDevOpsGroups {
         Write-LogMessage "Retrieving groups for project ID: $ProjectId"
         
         # Get project security groups
-        $groupsUrl = "$script:BaseApiUrl/graph/groups?scopeDescriptor=$ProjectId&api-version=6.0-preview.1"
+        $groupsUrl = "$script:BaseApiUrl/graph/groups?scopeDescriptor=$ProjectId&api-version=$script:GraphApiVersion"
         $response = Invoke-RestMethod -Uri $groupsUrl -Headers $Headers -Method Get
         
         $groups = $response.value | Where-Object { $_.principalName -match "\\[.*\\]" }
@@ -195,7 +207,7 @@ function Get-AzureDevOpsGroupMembers {
     )
     
     try {
-        $membersUrl = "$script:BaseApiUrl/graph/memberships/$GroupDescriptor?direction=down&api-version=6.0-preview.1"
+        $membersUrl = "$script:BaseApiUrl/graph/memberships/$GroupDescriptor?direction=down&api-version=$script:GraphApiVersion"
         $response = Invoke-RestMethod -Uri $membersUrl -Headers $Headers -Method Get
         
         $members = @()
@@ -203,7 +215,7 @@ function Get-AzureDevOpsGroupMembers {
             if ($membership.memberDescriptor) {
                 try {
                     # Get member details
-                    $memberUrl = "$script:BaseApiUrl/graph/subjects/$($membership.memberDescriptor)?api-version=6.0-preview.1"
+                    $memberUrl = "$script:BaseApiUrl/graph/subjects/$($membership.memberDescriptor)?api-version=$script:GraphApiVersion"
                     $memberResponse = Invoke-RestMethod -Uri $memberUrl -Headers $Headers -Method Get
                     
                     if ($memberResponse.displayName) {
@@ -328,6 +340,7 @@ function Get-AzureDevOpsProjectInfo {
         Write-LogMessage "Organization URL: $OrganizationUrl"
         Write-LogMessage "Output Path: $OutputPath"
         Write-LogMessage "Project Filter: $ProjectFilter"
+        Write-LogMessage "API Version: $ApiVersion"
         
         # Initialize API connection
         $headers = Initialize-AzureDevOpsApi -OrgUrl $OrganizationUrl -PAT $PersonalAccessToken

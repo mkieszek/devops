@@ -66,7 +66,8 @@ $pat = Get-AzKeyVaultSecret -VaultName "your-keyvault" -Name "azuredevops-pat" -
     -OrganizationUrl "https://dev.azure.com/yourorganization" `
     -PersonalAccessToken $env:AZURE_DEVOPS_PAT `
     -OutputPath "C:\Reports\DevOpsReport-$(Get-Date -Format 'yyyy-MM-dd').md" `
-    -ProjectFilter "Production*"
+    -ProjectFilter "Production*" `
+    -ApiVersion "7.0"
 ```
 
 ## Best Practices
