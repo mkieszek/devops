@@ -13,9 +13,24 @@ This directory contains automation scripts for various DevOps tasks.
 - PowerShell 7+
 - Azure PowerShell module (for Azure scripts)
 - Appropriate Azure permissions (for Azure scripts)
+- Azure DevOps Personal Access Token (for Azure DevOps scripts)
 - SonarQube authentication token (for SonarQube scripts)
 
 ### Available Scripts
+
+#### Get-AzureDevOpsProjectInfo.ps1
+Retrieves project information from Azure DevOps including projects, security groups, and group members, then generates a Markdown report.
+
+```powershell
+# Basic usage
+.\powershell\Get-AzureDevOpsProjectInfo.ps1 -OrganizationUrl "https://dev.azure.com/yourorg" -PersonalAccessToken "your-pat-here"
+
+# Custom output path and project filter
+.\powershell\Get-AzureDevOpsProjectInfo.ps1 -OrganizationUrl "https://dev.azure.com/yourorg" -PersonalAccessToken "your-pat-here" -OutputPath "reports\devops-report.md" -ProjectFilter "DevOps*"
+
+# Using specific API version
+.\powershell\Get-AzureDevOpsProjectInfo.ps1 -OrganizationUrl "https://dev.azure.com/yourorg" -PersonalAccessToken "your-pat-here" -ApiVersion "7.0"
+```
 
 #### Get-SonarQubeProjectInfo.ps1
 Retrieves project information from SonarQube including Lines of Code (LOC) and last scan dates, then generates a Markdown report.
